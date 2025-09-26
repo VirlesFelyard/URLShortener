@@ -1,6 +1,7 @@
 from typing import Optional
 
 import asyncpg
+from config import DATABASE
 
 pool: Optional[asyncpg.Pool] = None
 
@@ -8,14 +9,14 @@ pool: Optional[asyncpg.Pool] = None
 async def db_connect() -> None:
     global pool
     pool = await asyncpg.create_pool(
-        user="postgres",
-        password="postgres",
-        database="urlshortener",
-        host="localhost",
-        port=5432,
+        user=DATABASE["USER"],
+        password=DATABASE["PASSWORD"],
+        database=DATABASE["NAME"],
+        host=DATABASE["HOST"],
+        port=DATABASE["PORT"],
     )
 
-    print("🐁 -> 🛢️ Database 'urlshortener' sucessfully connected!")
+    print(f"🐁 -> 🛢️ Database '{DATABASE['NAME']}' sucessfully connected!")
 
 
 async def db_close() -> None:
@@ -23,7 +24,7 @@ async def db_close() -> None:
     if pool:
         await pool.close()
 
-    print("🐁 -> 🛢️ Database 'urlshortener' sucessfully disconnected!")
+    print(f"🐁 -> 🛢️ Database '{DATABASE['NAME']}' sucessfully disconnected!")
 
 
 async def db_get() -> asyncpg.Pool:

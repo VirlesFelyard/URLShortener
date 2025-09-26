@@ -24,7 +24,7 @@ tables_list: List[str] = [
         email VARCHAR(256),
         password VARCHAR(60) NOT NULL,
         role VARCHAR(8) DEFAULT 'consumer',
-        ip INTEGER NOT NULL REFERENCES ip_adresses(id)
+        ip INTEGER UNIQUE NOT NULL REFERENCES ip_adresses(id)
     )
     """,
     """
@@ -48,6 +48,16 @@ tables_list: List[str] = [
         clicked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         user_agent VARCHAR(1024),
         ip INTEGER NOT NULL REFERENCES ip_adresses(id)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS api_keys(
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER UNIQUE NOT NULL REFERENCES users(id),
+        key VARCHAR(64) UNIQUE NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 days'),
+        is_active BOOLEAN DEFAULT TRUE
     )
     """,
 ]
