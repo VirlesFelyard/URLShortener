@@ -1,0 +1,27 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg
+dist/
+build/
+
+# --- FastAPI / Uvicorn ---
+*.log
+
+# --- Virtual environments ---
+venv/
+env/
+.venv/
+
+# --- Config / secrets ---
+config.py
+.env
+.env.*
+
+# --- pytest / cache ---
+.pytest_cache/
+.cache/
