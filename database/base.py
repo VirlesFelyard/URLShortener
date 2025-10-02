@@ -1,6 +1,7 @@
 from typing import Optional
 
 import asyncpg
+
 from config import DATABASE
 
 pool: Optional[asyncpg.Pool] = None
