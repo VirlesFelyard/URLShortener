@@ -1,12 +1,14 @@
 from typing import List
 
+from asyncpg import Pool, Record
+
 from database.base import db_get
 
 tables_list: List[str] = [
     """
-    CREATE TABLE IF NOT EXISTS ip_adresses(
+    CREATE TABLE IF NOT EXISTS ip_addresses(
         id SERIAL PRIMARY KEY,
-        ip_adress INET NOT NULL UNIQUE,
+        ip_address INET NOT NULL UNIQUE,
         timezone VARCHAR(48),
         provider VARCHAR(128),
         country VARCHAR(64),
@@ -21,10 +23,9 @@ tables_list: List[str] = [
     CREATE TABLE IF NOT EXISTS users(
         id SERIAL PRIMARY KEY,
         name VARCHAR(32) NOT NULL,
-        email VARCHAR(256),
+        email VARCHAR(256) UNIQUE NOT NULL,
         password VARCHAR(60) NOT NULL,
         role VARCHAR(8) DEFAULT 'consumer',
-        ip INTEGER UNIQUE NOT NULL REFERENCES ip_adresses(id)
     )
     """,
     """
@@ -64,7 +65,22 @@ tables_list: List[str] = [
 
 
 async def init_tables():
-    pool = await db_get()
+    pool: Pool = await db_get()
     async with pool.acquire() as conn:
         for table in tables_list:
-            print(await conn.execute(table))
+            await conn.execute(table)
+
+
+async def get_fields(table: str) -> List[str]:
+    pool: Pool = await db_get()
+    async with pool.acquire() as conn:
+        rows: list[Record] = await conn.fetch(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = $1
+            ORDER BY ordinal_position
+            """,
+            table,
+        )
+        return [row["column_name"] for row in rows]
