@@ -1,11 +1,12 @@
-from datetime import datetime, time
+from datetime import datetime
 from ipaddress import ip_address
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
-from database.base import db_close, db_connect, db_get
+from config import get_hash, verify_hash
 from database.ips import ip_add, ip_fetchrow
+from database.urls import url_add, url_fetchrow
 from dto.schemas import UrlAddReq
 from utils.security import authorize_user
 
@@ -18,7 +19,7 @@ async def add(data: UrlAddReq, user_id: int = Depends(authorize_user)):
         user_id=user_id,
         original_url=str(data.original_url),
         short_code=data.short_code,
-        password=data.password,
+        password=get_hash(data.password) if data.password is not None else None,
         valid_from=data.valid_from,
         valid_until=data.valid_until,
         allow_proxy=data.allow_proxy,
@@ -29,7 +30,7 @@ async def add(data: UrlAddReq, user_id: int = Depends(authorize_user)):
 
 
 @router.get("/{short_code}")
-async def redirect(short_code: str, request: Request):
+async def redirect(short_code: str, request: Request, password: str | None = None):
     if not request.client or not request.client.host:
         raise HTTPException(status_code=400, detail="Missing client IP")
 
@@ -44,32 +45,37 @@ async def redirect(short_code: str, request: Request):
         await ip_add(ip)
         ip_info = await ip_fetchrow(ip, "is_proxy")
 
-    pool = await db_get()
-    async with pool.acquire() as conn:
-        r = await conn.fetchrow(
-            """
-            SELECT original_url, expires_at, valid_from, valid_until, allow_proxy
-            FROM urls
-            WHERE short_code = $1
-        """,
-            short_code,
-        )
+    r = await url_fetchrow(
+        short_code,
+        "original_url",
+        "valid_from",
+        "valid_until",
+        "password",
+        "expires_at",
+        "allow_proxy",
+    )
 
-        if not r:
-            raise HTTPException(status_code=404, detail="Short code not found")
-        if ip_info and ip_info.get("is_proxy") and not r["allow_proxy"]:
-            raise HTTPException(status_code=403, detail="Access denied: proxy detected")
+    if not r:
+        raise HTTPException(status_code=404, detail="Short code not found")
+    if ip_info and ip_info.get("is_proxy") and not r["allow_proxy"]:
+        raise HTTPException(status_code=403, detail="Access denied: proxy detected")
 
-        now = datetime.utcnow()
-        now_time = now.time()
+    now = datetime.utcnow()
+    now_time = now.time()
 
-        if r["expires_at"] < now:
-            raise HTTPException(status_code=410, detail="Link expired")
+    if r["password"]:
+        if not password:
+            raise HTTPException(status_code=401, detail="Password required")
+        if not verify_hash(password, r["password"]):
+            raise HTTPException(status_code=401, detail="Invalid password")
 
-        if r["valid_from"] and now_time < r["valid_from"]:
-            raise HTTPException(status_code=403, detail="Access not yet allowed")
+    if r["expires_at"] < now:
+        raise HTTPException(status_code=410, detail="Link expired")
 
-        if r["valid_until"] and now_time > r["valid_until"]:
-            raise HTTPException(status_code=403, detail="Access time window closed")
+    if r["valid_from"] and now_time < r["valid_from"]:
+        raise HTTPException(status_code=403, detail="Access not yet allowed")
 
-        return RedirectResponse(url=r["original_url"])
+    if r["valid_until"] and now_time > r["valid_until"]:
+        raise HTTPException(status_code=403, detail="Access time window closed")
+
+    return RedirectResponse(url=r["original_url"])

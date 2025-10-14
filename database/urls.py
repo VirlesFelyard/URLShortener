@@ -1,8 +1,9 @@
 from datetime import time
-from typing import Tuple
+from typing import Any, Dict, Tuple
 from urllib.parse import urlparse
 
 from database.base import db_get
+from database.tables import get_fields
 
 
 async def url_shortcode_exists(short_code: str) -> bool:
@@ -12,6 +13,24 @@ async def url_shortcode_exists(short_code: str) -> bool:
             await conn.fetchval("SELECT 1 FROM urls WHERE short_code = $1", short_code)
             is not None
         )
+
+
+async def url_fetchrow(short_code: str, *fields: str) -> Dict[str, Any] | None:
+    if not fields:
+        return None
+
+    allow_fields: List[str] = await get_fields("urls")
+    field_list: str = ", ".join(filter(lambda f: f in allow_fields, fields))
+
+    if not field_list:
+        return None
+
+    pool: Pool = await db_get()
+    async with pool.acquire() as conn:
+        row: Record | None = await conn.fetchrow(
+            f"SELECT {field_list} FROM urls WHERE short_code = $1", short_code
+        )
+        return dict(row) if row else None
 
 
 def validate_url(url: str) -> str:
