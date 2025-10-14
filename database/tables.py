@@ -24,7 +24,7 @@ tables_list: List[str] = [
         id SERIAL PRIMARY KEY,
         name VARCHAR(32) NOT NULL,
         email VARCHAR(256) UNIQUE NOT NULL,
-        password VARCHAR(60) NOT NULL,
+        password VARCHAR(64) NOT NULL,
         role VARCHAR(8) DEFAULT 'consumer'
     )
     """,
@@ -36,7 +36,7 @@ tables_list: List[str] = [
         short_code VARCHAR(16) UNIQUE NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 days'),
-        password VARCHAR(60),
+        password VARCHAR(64),
         valid_from TIME, valid_until TIME,
         allow_proxy BOOLEAN DEFAULT TRUE,
         UNIQUE (user_id, original_url)
@@ -55,9 +55,8 @@ tables_list: List[str] = [
     CREATE TABLE IF NOT EXISTS api_keys(
         id SERIAL PRIMARY KEY,
         user_id INTEGER UNIQUE NOT NULL REFERENCES users(id),
-        key VARCHAR(60) UNIQUE NOT NULL,
+        key VARCHAR(64) UNIQUE NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 days'),
         is_active BOOLEAN DEFAULT TRUE
     )
     """,

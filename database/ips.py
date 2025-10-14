@@ -88,7 +88,7 @@ async def ip_add(ip: IPv4Address | IPv6Address) -> None:
 
 
 async def test() -> None:
-    new_ip = ip_address("58.210.196.42")
+    new_ip = ip_address("72.14.201.51")
     await ip_exists(new_ip)
     await ip_add(new_ip)
     print(await ip_fetchrow(new_ip, "id", "ip_address", "country", "longitude"))

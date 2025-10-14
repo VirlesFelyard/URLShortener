@@ -1,21 +1,14 @@
 from typing import Optional
 
 import asyncpg
-
-from config import DATABASE
+from config import DATABASE, DATABASE_URL
 
 pool: Optional[asyncpg.Pool] = None
 
 
 async def db_connect() -> None:
     global pool
-    pool = await asyncpg.create_pool(
-        user=DATABASE["USER"],
-        password=DATABASE["PASSWORD"],
-        database=DATABASE["NAME"],
-        host=DATABASE["HOST"],
-        port=DATABASE["PORT"],
-    )
+    pool = await asyncpg.create_pool(DATABASE_URL)
 
     print(f"🐁 -> 🛢️ Database '{DATABASE['NAME']}' sucessfully connected!")
 

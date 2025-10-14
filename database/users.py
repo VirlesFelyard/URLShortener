@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 from asyncpg import Pool
 from config import *
@@ -30,23 +30,21 @@ async def user_add(name: str, email: str, password: str) -> Tuple[int, str]:
             """,
             name,
             email,
-            await get_hash(password),
+            get_hash(password),
         )
         return (200, "user created successfully!")
 
 
-async def user_login(email: str, password: str) -> Tuple[int, str]:
+async def user_login(email: str, password: str) -> Tuple[int, Optional[int]]:
     pool: Pool = await db_get()
     async with pool.acquire() as conn:
         r = await conn.fetchrow(
-            "select id, password from users where email = $1", email
+            "SELECT id, password FROM users WHERE email = $1", email
         )
         if r is None:
-            return (404, "user doesn't exist!")
+            return 404, None
 
-        if not await verify_hash(password, r[1]):
-            return (401, "wrong password!")
+        if not verify_hash(password, r["password"]):
+            return 401, None
 
-        akey, hashed_api_key = await gen_api_key()
-        await akey_upsert(r[0], hashed_api_key)
-        return (200, akey)
+        return 200, r["id"]
