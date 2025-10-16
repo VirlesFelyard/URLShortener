@@ -29,7 +29,7 @@ tables_list: List[str] = [
     """
     CREATE TABLE IF NOT EXISTS urls(
         id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id),
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         original_url VARCHAR(2048) NOT NULL,
         short_code VARCHAR(16) UNIQUE NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -43,16 +43,16 @@ tables_list: List[str] = [
     """
     CREATE TABLE IF NOT EXISTS clicks(
         id SERIAL PRIMARY KEY,
-        url_id INTEGER NOT NULL REFERENCES urls(id),
+        url_id INTEGER NOT NULL REFERENCES urls(id) ON DELETE CASCADE,
         clicked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         user_agent VARCHAR(1024),
-        ip INTEGER NOT NULL REFERENCES ip_addresses(id)
+        ip INTEGER NOT NULL REFERENCES ip_addresses(id) ON DELETE CASCADE
     )
     """,
     """
     CREATE TABLE IF NOT EXISTS api_keys(
         id SERIAL PRIMARY KEY,
-        user_id INTEGER UNIQUE NOT NULL REFERENCES users(id),
+        user_id INTEGER UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         key VARCHAR(64) UNIQUE NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         is_active BOOLEAN DEFAULT TRUE
