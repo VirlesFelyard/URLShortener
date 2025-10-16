@@ -62,3 +62,7 @@ class URLRepository:
                 valid_until,
                 allow_proxy,
             )
+
+    async def delete(self, short_code: str) -> None:
+        async with self.pool.acquire() as conn:
+            await conn.execute("DELETE FROM urls WHERE short_code = $1", short_code)

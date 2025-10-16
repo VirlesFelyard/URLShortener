@@ -10,6 +10,21 @@ class URLService:
     def __init__(self, url_repo: URLRepository) -> None:
         self.url_repo: URLRepository = url_repo
 
+    async def delete_short_url(
+        self,
+        user_id: int,
+        short_code: str,
+    ) -> None:
+        row = await self.url_repo.fetchrow_by_shortcode(short_code, fields=["user_id"])
+        if row is None:
+            raise ServiceError(message="Short code not found", status_code=404)
+        if row["user_id"] != user_id:
+            raise ServiceError(
+                message="You do not have permission to delete this URL", status_code=403
+            )
+
+        await self.url_repo.delete(short_code)
+
     async def resolve_redirect(
         self,
         short_code: str,

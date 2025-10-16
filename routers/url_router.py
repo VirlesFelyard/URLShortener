@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
 from dto.schemas import UrlAddReq
+from services import url_service
 from utils.exceptions import ServiceError
 from utils.security import authorize_user
 
@@ -27,6 +28,18 @@ async def add(
             allow_proxy=data.allow_proxy,
         )
         return {"message": "Short URL created successfully"}
+    except ServiceError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+
+
+@router.delete("/api/url{short_code}")
+async def delete(
+    short_code: str, request: Request, user_id: int = Depends(authorize_user)
+):
+    url_service = request.app.state.url_service
+    try:
+        await url_service.delete_short_url(user_id, short_code)
+        return {"message", "Short URL deleted successfully"}
     except ServiceError as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
