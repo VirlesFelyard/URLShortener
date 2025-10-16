@@ -1,8 +1,6 @@
 from typing import List
 
-from asyncpg import Pool, Record
-
-from database.base import db_get
+from asyncpg import Pool
 
 tables_list: List[str] = [
     """
@@ -63,23 +61,7 @@ tables_list: List[str] = [
 ]
 
 
-async def init_tables():
-    pool: Pool = await db_get()
+async def init_tables(pool: Pool) -> None:
     async with pool.acquire() as conn:
         for table in tables_list:
             await conn.execute(table)
-
-
-async def get_fields(table: str) -> List[str]:
-    pool: Pool = await db_get()
-    async with pool.acquire() as conn:
-        rows: list[Record] = await conn.fetch(
-            """
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_schema = 'public' AND table_name = $1
-            ORDER BY ordinal_position
-            """,
-            table,
-        )
-        return [row["column_name"] for row in rows]

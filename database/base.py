@@ -1,28 +1,12 @@
-from typing import Optional
+from asyncpg import Pool, create_pool
+from fastapi import FastAPI
 
-import asyncpg
-from config import DATABASE, DATABASE_URL
-
-pool: Optional[asyncpg.Pool] = None
+from config import DATABASE_URL
 
 
-async def db_connect() -> None:
-    global pool
-    pool = await asyncpg.create_pool(DATABASE_URL)
-
-    print(f"🐁 -> 🛢️ Database '{DATABASE['NAME']}' sucessfully connected!")
+async def db_connect(app: FastAPI) -> None:
+    app.state.pool: Pool = await create_pool(DATABASE_URL)
 
 
-async def db_close() -> None:
-    global pool
-    if pool:
-        await pool.close()
-
-    print(f"🐁 -> 🛢️ Database '{DATABASE['NAME']}' sucessfully disconnected!")
-
-
-async def db_get() -> asyncpg.Pool:
-    global pool
-    if pool is None:
-        await db_connect()
-    return pool
+async def db_close(app: FastAPI) -> None:
+    await app.state.pool.close()

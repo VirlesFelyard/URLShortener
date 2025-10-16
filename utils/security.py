@@ -1,16 +1,13 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-
-from database.api_keys import akey_validate
 
 security = HTTPBearer()
 
 
 async def authorize_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> int:
     token = credentials.credentials
-    status, msg = await akey_validate(token)
-    if not status or msg is None:
-        raise HTTPException(status_code=401, detail="Invalid or expired api-key")
-    return msg
+    apikey_service = request.app.state.apikey_service
+    return await apikey_service.validate_akey(token)

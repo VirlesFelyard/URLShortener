@@ -1,17 +1,17 @@
 from datetime import time
 from typing import Annotated
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, EmailStr, Field, HttpUrl
 
 
 class RegisterReq(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     password: str
 
 
 class LoginReq(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 
