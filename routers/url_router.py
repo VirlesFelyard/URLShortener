@@ -59,7 +59,6 @@ async def redirect(short_code: str, request: Request, password: str | None = Non
 
     is_proxy = None
     if not ip.is_loopback:
-        await ip_service.save_ip(ip)
         is_proxy = await ip_service.is_proxy(ip)
 
     try:

@@ -27,6 +27,11 @@ class IpService:
             city=data["city"],
         )
 
+    async def is_proxy(self, ip_address: IPv4Address | IPv6Address) -> bool:
+        await self.ensure_ip(ip_address)
+        row = await self.ip_repo.fetchrow_by_ip(ip_address, fields=["is_proxy"])
+        return row["is_proxy"]
+
     async def _fetch_ip_data(self, ip: str) -> dict:
         async with ClientSession() as session:
             async with session.get(f"https://proxycheck.io/v3/{ip}") as resp:
