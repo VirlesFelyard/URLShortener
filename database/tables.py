@@ -46,7 +46,7 @@ tables_list: List[str] = [
         url_id INTEGER NOT NULL REFERENCES urls(id) ON DELETE CASCADE,
         clicked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         user_agent VARCHAR(1024),
-        ip INTEGER NOT NULL REFERENCES ip_addresses(id) ON DELETE CASCADE
+        ip INTEGER REFERENCES ip_addresses(id) ON DELETE CASCADE
     )
     """,
     """
