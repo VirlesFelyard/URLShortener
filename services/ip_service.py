@@ -1,4 +1,5 @@
 from ipaddress import IPv4Address, IPv6Address
+from typing import Optional
 
 from aiohttp import ClientSession
 
@@ -31,6 +32,10 @@ class IpService:
         await self.ensure_ip(ip_address)
         row = await self.ip_repo.fetchrow_by_ip(ip_address, fields=["is_proxy"])
         return row["is_proxy"]
+
+    async def get_ip_id(self, ip_address: IPv4Address | IPv6Address) -> Optional[int]:
+        row = await self.ip_repo.fetchrow_by_ip(ip_address, fields=["id"])
+        return row["id"] if row else None
 
     async def _fetch_ip_data(self, ip: str) -> dict:
         async with ClientSession() as session:
