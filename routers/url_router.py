@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from dto.schemas import UrlAddReq
+from dto.schemas import UrlAddReq, UrlUpdateReq
 from utils.exceptions import ServiceError
 from utils.security import authorize_user
 
-router: APIRouter = APIRouter()
+router: APIRouter = APIRouter(tags=["URL Managment"])
 
 
-@router.post("")
+@router.post("/")
 async def add(
     data: UrlAddReq, request: Request, user_id: int = Depends(authorize_user)
 ):
@@ -28,7 +28,7 @@ async def add(
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
 
-@router.get("")
+@router.get("/")
 async def get_all_urls_by_user(
     request: Request, user_id: int = Depends(authorize_user)
 ):
@@ -40,7 +40,7 @@ async def get_all_urls_by_user(
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
 
-@router.delete("")
+@router.delete("/")
 async def delete_all_urls_by_user(
     request: Request, user_id: int = Depends(authorize_user)
 ):
@@ -56,6 +56,22 @@ async def get_by_shortcode(
     url_service = request.app.state.url_service
     try:
         return await url_service.fetch_by_shortcode(user_id, short_code)
+    except ServiceError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+
+
+@router.patch("/{short_code}")
+async def update_by_shortcode(
+    short_code: str,
+    data: UrlUpdateReq,
+    request: Request,
+    user_id: int = Depends(authorize_user),
+):
+    url_service = request.app.state.url_service
+    try:
+        await url_service.update_short_url(
+            user_id, short_code, data.dict(exclude_unset=True)
+        )
     except ServiceError as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
 

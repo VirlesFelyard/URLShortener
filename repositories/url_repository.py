@@ -1,5 +1,5 @@
 from datetime import time
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from asyncpg import Pool, Record
 
@@ -51,11 +51,25 @@ class URLRepository:
                 allow_proxy,
             )
 
+    async def update_by_shortcode(self, short_code: str, fields: Dict[str, Any]):
+        if not fields:
+            return
+        set_expression: str = ", ".join(
+            f"{key} = ${i + 2}" for i, key in enumerate(fields.keys())
+        )
+        values: list = list(fields.values())
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                f"UPDATE urls SET {set_expression} WHERE short_code = $1",
+                short_code,
+                *values,
+            )
+
     async def fetchrow_by_shortcode(
         self, short_code: str, fields: List[str]
     ) -> Optional[dict]:
         if not fields:
-            return None
+            return
         field_list: str = ", ".join(fields)
         async with self.pool.acquire() as conn:
             row: Record = await conn.fetchrow(
