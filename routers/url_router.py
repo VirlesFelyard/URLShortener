@@ -4,13 +4,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
 from dto.schemas import UrlAddReq
+from services import url_service
 from utils.exceptions import ServiceError
 from utils.security import authorize_user
 
 router = APIRouter()
 
 
-@router.post("/api/url/add")
+@router.post("/api/url")
 async def add(
     data: UrlAddReq, request: Request, user_id: int = Depends(authorize_user)
 ):
@@ -31,8 +32,40 @@ async def add(
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
 
+@router.get("/api/url")
+async def get_all_urls_by_user(
+    request: Request, user_id: int = Depends(authorize_user)
+):
+    url_service = request.app.state.url_service
+
+    try:
+        return await url_service.fetch_user_urls(user_id)
+    except ServiceError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+
+
+@router.delete("/api/url")
+async def delete_all_urls_by_user(
+    request: Request, user_id: int = Depends(authorize_user)
+):
+    url_service = request.app.state.url_service
+    r: int = await url_service.delete_by_user(user_id)
+    return {"message": f"Deleted {r} shortened URLs"}
+
+
+@router.get("/api/url/{short_code}")
+async def get_by_shortcode(
+    short_code: str, request: Request, user_id: int = Depends(authorize_user)
+):
+    url_service = request.app.state.url_service
+    try:
+        return await url_service.fetch_by_shortcode(user_id, short_code)
+    except ServiceError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+
+
 @router.delete("/api/url/{short_code}")
-async def delete(
+async def delete_by_shortcode(
     short_code: str, request: Request, user_id: int = Depends(authorize_user)
 ):
     url_service = request.app.state.url_service

@@ -1,5 +1,5 @@
 from datetime import time
-from typing import Optional
+from typing import List, Optional
 
 from repositories.url_repository import URLRepository
 from utils.exceptions import ServiceError
@@ -8,21 +8,6 @@ from utils.exceptions import ServiceError
 class URLService:
     def __init__(self, url_repo: URLRepository) -> None:
         self.url_repo: URLRepository = url_repo
-
-    async def delete_short_url(
-        self,
-        user_id: int,
-        short_code: str,
-    ) -> None:
-        row = await self.url_repo.fetchrow_by_shortcode(short_code, fields=["user_id"])
-        if row is None:
-            raise ServiceError(message="Short code not found", status_code=404)
-        if row["user_id"] != user_id:
-            raise ServiceError(
-                message="You do not have permission to delete this URL", status_code=403
-            )
-
-        await self.url_repo.delete(short_code)
 
     async def create_short_url(
         self,
@@ -54,3 +39,55 @@ class URLService:
             valid_until,
             allow_proxy,
         )
+
+    async def fetch_user_urls(self, user_id: int) -> List[dict]:
+        rows: List[dict] = await self.url_repo.fetch_by_user_id(user_id)
+        if not rows:
+            raise ServiceError(message="User has no shortened URLs", status_code=404)
+        return [
+            {key: value for key, value in row.items() if key not in ("id", "user_id")}
+            for row in rows
+        ]
+
+    async def fetch_by_shortcode(self, user_id: int, short_code: str) -> dict:
+        row: Optional[dict] = await self.url_repo.fetchrow_by_shortcode(
+            short_code,
+            fields=[
+                "user_id",
+                "original_url",
+                "password",
+                "created_at",
+                "expires_at",
+                "valid_from",
+                "valid_until",
+                "allow_proxy",
+            ],
+        )
+        if row is None:
+            raise ServiceError(message="Short code not found", status_code=404)
+        if row["user_id"] != user_id:
+            raise ServiceError(
+                message="You do not have permission to see the info about this URL",
+                status_code=403,
+            )
+        return {key: value for key, value in row.items() if key != "user_id"}
+
+    async def delete_short_url(
+        self,
+        user_id: int,
+        short_code: str,
+    ) -> None:
+        row: Optional[dict] = await self.url_repo.fetchrow_by_shortcode(
+            short_code, fields=["user_id"]
+        )
+        if row is None:
+            raise ServiceError(message="Short code not found", status_code=404)
+        if row["user_id"] != user_id:
+            raise ServiceError(
+                message="You do not have permission to delete this URL", status_code=403
+            )
+
+        await self.url_repo.delete_by_shortcode(short_code)
+
+    async def delete_by_user(self, user_id: int) -> int:
+        return await self.url_repo.delete_by_user_id(user_id)

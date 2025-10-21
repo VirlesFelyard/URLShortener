@@ -1,12 +1,12 @@
 from datetime import time
 from typing import List, Optional
 
-from asyncpg import Pool
+from asyncpg import Pool, Record
 
 
 class URLRepository:
     def __init__(self, pool: Pool) -> None:
-        self.pool = pool
+        self.pool: Pool = pool
 
     async def shortcode_exists(self, short_code: str) -> bool:
         async with self.pool.acquire() as conn:
@@ -21,18 +21,6 @@ class URLRepository:
                 user_id,
                 original_url,
             )
-
-    async def fetchrow_by_shortcode(
-        self, short_code: str, fields: List[str]
-    ) -> Optional[dict]:
-        if not fields:
-            return None
-        field_list: str = ", ".join(fields)
-        async with self.pool.acquire() as conn:
-            row = await conn.fetchrow(
-                f"SELECT {field_list} FROM urls WHERE short_code = $1", short_code
-            )
-            return dict(row) if row else None
 
     async def add(
         self,
@@ -63,6 +51,33 @@ class URLRepository:
                 allow_proxy,
             )
 
-    async def delete(self, short_code: str) -> None:
+    async def fetchrow_by_shortcode(
+        self, short_code: str, fields: List[str]
+    ) -> Optional[dict]:
+        if not fields:
+            return None
+        field_list: str = ", ".join(fields)
+        async with self.pool.acquire() as conn:
+            row: Record = await conn.fetchrow(
+                f"SELECT {field_list} FROM urls WHERE short_code = $1", short_code
+            )
+            return dict(row) if row else None
+
+    async def fetch_by_user_id(
+        self,
+        user_id: int,
+    ) -> List[dict]:
+        async with self.pool.acquire() as conn:
+            rows: List[Record] = await conn.fetch(
+                "SELECT * FROM urls WHERE user_id = $1", user_id
+            )
+            return [dict(row) for row in rows]
+
+    async def delete_by_user_id(self, user_id: int) -> int:
+        async with self.pool.acquire() as conn:
+            r: str = await conn.execute("DELETE FROM urls WHERE user_id = $1", user_id)
+            return int(r.split(" ")[1])
+
+    async def delete_by_shortcode(self, short_code: str) -> None:
         async with self.pool.acquire() as conn:
             await conn.execute("DELETE FROM urls WHERE short_code = $1", short_code)
