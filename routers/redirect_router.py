@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse
 
 from utils.exceptions import ServiceError
 
-router: APIRouter = APIRouter()
+router: APIRouter = APIRouter(tags=["Redirect"])
 
 
 @router.get("/{short_code}")

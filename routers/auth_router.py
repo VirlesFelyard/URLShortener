@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Request
 from dto.schemas import LoginReq, RegisterReq
 from utils.exceptions import ServiceError
 
-router = APIRouter()
+router = APIRouter(tags=["Authentication"])
 
 
 @router.post("/register")
