@@ -29,7 +29,9 @@ class URLService:
             )
 
         if expires_at:
-            now = datetime.now(timezone.utc)
+            now = datetime.utcnow().replace(tzinfo=None)
+            if expires_at.tzinfo is not None:
+                expires_at = expires_at.replace(tzinfo=None)
             if expires_at < now:
                 raise ServiceError(
                     message="Expiration date cannot be in the past", status_code=422
@@ -38,6 +40,7 @@ class URLService:
                 raise ServiceError(
                     message="URL lifetime cannot exceed 30 days", status_code=422
                 )
+
         if valid_from and valid_until and valid_from >= valid_until:
             raise ServiceError(
                 message="valid_from must be earlier than valid_until", status_code=422
@@ -67,8 +70,10 @@ class URLService:
             short_code, fields=["user_id"]
         )
         if "expires_at" in fields:
-            now = datetime.now(timezone.utc)
+            now = datetime.utcnow().replace(tzinfo=None)
             expires_at = fields["expires_at"]
+            if expires_at.tzinfo is not None:
+                fields["expires_at"] = expires_at.replace(tzinfo=None)
             if expires_at < now:
                 raise ServiceError(
                     message="Expiration date cannot be in the past", status_code=422
