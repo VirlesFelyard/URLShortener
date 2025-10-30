@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import datetime, time
 from typing import Any, Dict, List, Optional
 
 from asyncpg import Pool, Record
@@ -30,6 +30,7 @@ class URLRepository:
         password: Optional[str],
         valid_from: Optional[time],
         valid_until: Optional[time],
+        expires_at: Optional[datetime],
         allow_proxy: bool,
     ) -> int:
         async with self.pool.acquire() as conn:
@@ -37,9 +38,10 @@ class URLRepository:
                 """
                 INSERT INTO urls (
                     user_id, original_url, short_code,
-                    password, valid_from, valid_until, allow_proxy
+                    password, valid_from, valid_until, 
+                    expires_at, allow_proxy
                 ) VALUES (
-                    $1, $2, $3, $4, $5, $6, $7
+                    $1, $2, $3, $4, $5, $6, $7, $8
                 ) RETURNING id
                 """,
                 user_id,
@@ -48,6 +50,7 @@ class URLRepository:
                 password,
                 valid_from,
                 valid_until,
+                expires_at,
                 allow_proxy,
             )
 

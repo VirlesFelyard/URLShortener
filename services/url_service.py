@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import datetime, time, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from config import EDITABLE_URL_FIELDS as allowed_keys
@@ -18,6 +18,7 @@ class URLService:
         password: Optional[str],
         valid_from: Optional[time],
         valid_until: Optional[time],
+        expires_at: Optional[datetime],
         allow_proxy: bool,
     ) -> int:
         if await self.url_repo.shortcode_exists(short_code):
@@ -26,6 +27,17 @@ class URLService:
             raise ServiceError(
                 message="URL already added by this user", status_code=409
             )
+
+        if expires_at:
+            now = datetime.now(timezone.utc)
+            if expires_at < now:
+                raise ServiceError(
+                    message="Expiration date cannot be in the past", status_code=422
+                )
+            if expires_at - now > timedelta(days=30):
+                raise ServiceError(
+                    message="URL lifetime cannot exceed 30 days", status_code=422
+                )
         if valid_from and valid_until and valid_from >= valid_until:
             raise ServiceError(
                 message="valid_from must be earlier than valid_until", status_code=422
@@ -38,6 +50,7 @@ class URLService:
             password,
             valid_from,
             valid_until,
+            expires_at,
             allow_proxy,
         )
 
@@ -53,6 +66,17 @@ class URLService:
         row: Optional[dict] = await self.url_repo.fetchrow_by_shortcode(
             short_code, fields=["user_id"]
         )
+        if "expires_at" in fields:
+            now = datetime.now(timezone.utc)
+            expires_at = fields["expires_at"]
+            if expires_at < now:
+                raise ServiceError(
+                    message="Expiration date cannot be in the past", status_code=422
+                )
+            if expires_at - now > timedelta(days=30):
+                raise ServiceError(
+                    message="URL lifetime cannot exceed 30 days", status_code=422
+                )
         if row is None:
             raise ServiceError(message="Short code not found", status_code=404)
         if row["user_id"] != user_id:
@@ -71,6 +95,13 @@ class URLService:
             and await self.url_repo.shortcode_exists(fields["short_code"])
         ):
             raise ServiceError(message="Short code already in use", status_code=409)
+        if (
+            "valid_from" in fields
+            and "valid_until" in fields
+            and fields["valid_from"] >= fields["valid_until"]
+        ):
+            raise ServiceError("valid_from must be earlier than valid_until", 422)
+
         await self.url_repo.update_by_shortcode(short_code, fields)
 
     async def fetch_user_urls(self, user_id: int) -> List[dict]:

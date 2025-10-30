@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import datetime, time
 from typing import Annotated, Optional
 
 from pydantic import BaseModel, EmailStr, Field, HttpUrl
@@ -23,6 +23,7 @@ class UrlAddReq(BaseModel):
     password: Optional[str] = None
     valid_from: Optional[time] = None
     valid_until: Optional[time] = None
+    expires_at: Optional[datetime] = None
     allow_proxy: bool = True
 
 
@@ -35,4 +36,5 @@ class UrlUpdateReq(BaseModel):
     password: Optional[str] = None
     valid_from: Optional[time] = None
     valid_until: Optional[time] = None
+    expires_at: Optional[datetime] = None
     allow_proxy: Optional[bool] = None

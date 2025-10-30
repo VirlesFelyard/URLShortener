@@ -21,6 +21,7 @@ async def add(
             password=data.password,
             valid_from=data.valid_from,
             valid_until=data.valid_until,
+            expires_at=data.expires_at,
             allow_proxy=data.allow_proxy,
         )
         return {"message": "Short URL created successfully"}
