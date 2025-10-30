@@ -10,18 +10,22 @@ from repositories.url_repository import URLRepository
 from repositories.user_repository import UserRepository
 from routers.auth_router import router as auth_route
 from routers.redirect_router import router as redirect_route
+from routers.statistic_router import router as statistic_route
 from routers.url_router import router as url_route
 from services.apikey_service import ApiKeyService
 from services.click_service import ClickService
 from services.ip_service import IpService
 from services.redirect_service import RedirectService
+from services.statistic_service import StatisticService
 from services.url_service import URLService
 from services.user_service import UserService
 
 app: FastAPI = FastAPI()
 
+
 app.include_router(auth_route, prefix="/api/auth")
 app.include_router(url_route, prefix="/api/url")
+app.include_router(statistic_route, prefix="/api/stats")
 app.include_router(redirect_route)
 
 
@@ -47,6 +51,10 @@ async def startup() -> None:
         app.state.url_service,
         app.state.click_service,
         app.state.ip_service,
+    )
+    app.state.statistic_service: StatisticService = StatisticService(
+        app.state.click_service,
+        app.state.url_service,
     )
 
 
