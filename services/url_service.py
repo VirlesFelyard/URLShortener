@@ -7,7 +7,6 @@ from utils.exceptions import ServiceError
 
 
 class URLService:
-
     def __init__(self, url_repo: URLRepository) -> None:
         self.url_repo: URLRepository = url_repo
 
@@ -66,9 +65,11 @@ class URLService:
             user_id, str(fields["original_url"])
         ):
             raise ServiceError(message="URL already added by this user")
-        if fields.get(
-            "short_code"
-        ) is not None and await self.url_repo.shortcode_exists(fields["short_code"]):
+        if (
+            fields.get("short_code") is not None
+            and fields["short_code"] != short_code
+            and await self.url_repo.shortcode_exists(fields["short_code"])
+        ):
             raise ServiceError(message="Short code already in use", status_code=409)
         await self.url_repo.update_by_shortcode(short_code, fields)
 
