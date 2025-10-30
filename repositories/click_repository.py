@@ -14,7 +14,7 @@ class ClickRepository:
         ip: int,
     ) -> None:
         async with self.pool.acquire() as conn:
-            return await conn.execute(
+            await conn.execute(
                 "INSERT INTO clicks(url_id, user_agent, ip) VALUES ($1, $2, $3)",
                 url_id,
                 user_agent,
