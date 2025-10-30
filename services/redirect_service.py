@@ -1,8 +1,7 @@
 from datetime import datetime
-from ipaddress import IPv4Address, IPv6Address, ip_address
+from ipaddress import IPv4Address, IPv6Address
 from typing import Optional
 
-from config import verify_hash
 from services.click_service import ClickService
 from services.ip_service import IpService
 from services.url_service import URLService
@@ -58,7 +57,7 @@ class RedirectService:
         if row["password"]:
             if not password:
                 raise ServiceError("Password required", 401)
-            if not verify_hash(password, row["password"]):
+            if password != row["password"]:
                 raise ServiceError("Invalid password", 401)
 
         if row["expires_at"] < now:
