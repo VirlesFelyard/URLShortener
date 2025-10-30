@@ -45,7 +45,9 @@ tables_list: List[str] = [
         id SERIAL PRIMARY KEY,
         url_id INTEGER NOT NULL REFERENCES urls(id) ON DELETE CASCADE,
         clicked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        user_agent VARCHAR(1024),
+        browser VARCHAR(64),
+        device VARCHAR(64),
+        os VARCHAR(64),
         ip INTEGER REFERENCES ip_addresses(id) ON DELETE CASCADE
     )
     """,
